@@ -1,0 +1,30 @@
+# AgentTest Configuration
+
+llm:
+  provider: openai
+  model: gpt-4o
+  temperature: 0.7
+  max_tokens: 4096
+
+tools:
+  enabled_tools:
+    - filesystem
+    - bash
+  # 限制允许执行的命令
+  allowed_commands:
+    - ls
+    - cat
+    - echo
+    - pwd
+    - grep
+    - find
+  # 文件系统根目录（可选，限制访问范围）
+  # filesystem_root: /path/to/allowed/root
+
+memory:
+  short_term_max_messages: 100
+  long_term_enabled: false
+  # long_term_storage_path: ~/.agenttest/memory.json
+
+debug: false
+log_level: INFO

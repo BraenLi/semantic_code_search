@@ -5,7 +5,7 @@
 - **项目名称**: QENAS (量子纠缠生态位自适应网络)
 - **项目位置**: `/Users/lgen/Users/lgen/QENAS`
 - **开始日期**: 2026-03-30
-- **状态**: 阶段 3 完成 - QENAS 策略与事件集成
+- **状态**: 阶段 4 完成 - 可视化模块
 
 ## 配置确认
 
@@ -203,12 +203,85 @@ QENAS/
 - [x] M0 (2026-03-30): 项目基础 + 核心模块框架完成 ✅
 - [x] M1 (2026-03-30): 数据源模块 + 事件驱动架构完成 ✅
 - [x] M2 (2026-03-30): QENAS 策略与事件集成 ✅
-- [ ] M3 (2 周): 完整回测系统
-- [ ] M4 (4 周): 可视化和 Web 服务
+- [x] M3 (2026-03-30): 可视化模块完成 ✅
+- [ ] M4 (2 周): 完整回测系统 + Web 服务
 
 ---
 
-### 2026-03-30 - 阶段 3: QENAS 策略与事件集成
+### 2026-03-30 - 阶段 4: 可视化模块
+
+#### 今日完成 (阶段 4)
+
+**可视化模块 - qenas_viz/:**
+
+1. **纠缠矩阵可视化** (`qenas_viz/entanglement_viz.py`):
+   - `EntanglementVisualizer` 类
+   - `plot_entanglement_matrix()` - 纠缠矩阵热力图
+   - `plot_entropy_history()` - 纠缠熵时间序列
+   - `plot_network_graph()` - 资产纠缠网络图
+   - 支持文本模式降级输出（无 matplotlib 环境）
+
+2. **事件时间线可视化** (`qenas_viz/event_viz.py`):
+   - `EventTimelineVisualizer` 类
+   - `plot_timeline()` - 事件时间线（按类型分组）
+   - `plot_type_distribution()` - 事件类型分布饼图
+   - `plot_impact_distribution()` - 影响级别柱状图
+   - `plot_sentiment_timeline()` - 情感变化时间线
+   - `get_event_summary()` - 事件摘要统计
+
+3. **业绩可视化** (`qenas_viz/performance_viz.py`):
+   - `PerformanceVisualizer` 类
+   - `BacktestResult` 数据类
+   - `plot_equity_curve()` - 权益曲线图
+   - `plot_drawdown()` - 回撤分析图
+   - `plot_returns_distribution()` - 收益率分布 + Q-Q 图
+   - `plot_rolling_metrics()` - 滚动夏普/波动率/收益
+
+4. **统一仪表板** (`qenas_viz/dashboard.py`):
+   - `QENASDashboard` 类整合所有可视化组件
+   - `update_entanglement()` - 更新纠缠数据
+   - `add_events()` - 添加事件数据
+   - `set_backtest_results()` - 设置回测结果
+   - `print_status()` - 打印状态报告
+   - `save_all_figures()` - 批量保存图表
+
+**测试模块 - tests/test_viz.py:**
+- [x] 18 个可视化测试全部通过
+
+#### 测试结果 (阶段 4)
+```
+======================== 48 passed, 93 warnings ========================
+```
+其中：
+- 核心模块测试：13 个
+- 数据源测试：10 个
+- 事件集成测试：7 个
+- 可视化测试：18 个
+
+#### 可视化功能说明
+
+**1. 纠缠矩阵热力图:**
+```
+        AAPL     GOOGL      MSFT
+---------------------------------
+AAPL    0.330    0.100    0.100
+GOOGL   0.100    0.330    0.100
+MSFT    0.100    0.100    0.330
+```
+
+**2. 事件时间线:**
+- 按事件类型分组显示
+- 影响级别决定点大小
+- 情感分数决定颜色
+
+**3. 权益曲线:**
+- 策略 vs 基准对比
+- 标注最大值/最小值
+- 集成关键指标（夏普、回撤、总收益）
+
+**4. 文本模式降级:**
+- 在无 matplotlib 环境下自动切换到文本输出
+- 保持核心信息展示
 
 #### 今日完成 (阶段 3)
 
