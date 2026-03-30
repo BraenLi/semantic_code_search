@@ -58,7 +58,11 @@ class CodeChangeHandler(FileSystemEventHandler):
 
     async def _debounce_index(self) -> None:
         """Wait for batch of changes then index."""
-        await asyncio.sleep(1.0)  # 1 second debounce
+        try:
+            await asyncio.sleep(1.0)  # 1 second debounce
+        except asyncio.CancelledError:
+            # Clean cancellation - pending files remain in queue for next batch
+            return
 
         if not self._pending_files:
             return

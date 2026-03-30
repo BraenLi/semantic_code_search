@@ -1,8 +1,17 @@
 """Embedding generation service using OpenAI-compatible API."""
 
-from openai import AsyncOpenAI
+import asyncio
+from typing import Optional
+
+from openai import AsyncOpenAI, APIError, APIConnectionError, RateLimitError
 
 from semantic_mcp.config import EmbeddingConfig
+
+
+# Retry configuration
+MAX_RETRIES = 3
+BASE_DELAY = 1.0  # Base delay for exponential backoff (seconds)
+MAX_DELAY = 30.0  # Maximum delay between retries
 
 
 class EmbeddingService:
@@ -21,19 +30,52 @@ class EmbeddingService:
         )
 
     async def generate(self, text: str) -> list[float]:
-        """Generate embedding for single text.
+        """Generate embedding for single text with retry logic.
 
         Args:
             text: Text to embed
 
         Returns:
             Embedding vector as list of floats
+
+        Raises:
+            APIError: If all retry attempts fail
         """
-        response = await self.client.embeddings.create(
-            model=self.config.model,
-            input=text,
-        )
-        return response.data[0].embedding
+        last_exception: Optional[Exception] = None
+
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = await self.client.embeddings.create(
+                    model=self.config.model,
+                    input=text,
+                )
+                return response.data[0].embedding
+            except RateLimitError as e:
+                last_exception = e
+                # Extract retry-after from response headers if available
+                retry_after = getattr(e, 'response', {}).get('headers', {}).get('retry-after')
+                if retry_after:
+                    delay = float(retry_after)
+                else:
+                    delay = min(BASE_DELAY * (2 ** attempt), MAX_DELAY)
+                await asyncio.sleep(delay)
+            except APIConnectionError as e:
+                last_exception = e
+                delay = min(BASE_DELAY * (2 ** attempt), MAX_DELAY)
+                await asyncio.sleep(delay)
+            except APIError as e:
+                # Non-retryable API error (4xx client errors)
+                if hasattr(e, 'status_code') and e.status_code and 400 <= e.status_code < 500:
+                    raise
+                last_exception = e
+                delay = min(BASE_DELAY * (2 ** attempt), MAX_DELAY)
+                await asyncio.sleep(delay)
+
+        # All retries exhausted
+        raise APIError(
+            message=f"Failed to generate embedding after {MAX_RETRIES} attempts: {last_exception}",
+            body=str(last_exception),
+        ) from last_exception
 
     async def generate_batch(self, texts: list[str]) -> list[list[float]]:
         """Generate embeddings for multiple texts.

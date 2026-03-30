@@ -100,6 +100,7 @@ class Indexer:
             metadata = chunk.to_metadata()
             metadata["hash"] = content_hash
             metadata["description"] = description
+            metadata["code"] = chunk.code  # Store code for search results
 
             self.storage.add(doc_id, embedding, metadata)
 
