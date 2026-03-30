@@ -1,0 +1,34 @@
+[project]
+name = "semantic-mcp"
+version = "0.1.0"
+description = "Semantic code search MCP server"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+    "chromadb>=0.4.0",
+    "openai>=1.0.0",
+    "watchdog>=3.0.0",
+    "tree-sitter>=0.20.0",
+    "tree-sitter-python",
+    "tree-sitter-c",
+    "tree-sitter-cpp",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.scripts]
+semantic-mcp = "semantic_mcp.main:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/semantic_mcp"]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
