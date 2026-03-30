@@ -6,8 +6,8 @@ from typing import Optional
 from semantic_mcp.parser.ast_parser import ASTParser, CodeNode
 
 
-# Line threshold for small files
-SMALL_FILE_THRESHOLD = 50
+# Default line threshold for small files (can be overridden via SEMANTIC_SMALL_FILE_THRESHOLD)
+DEFAULT_SMALL_FILE_THRESHOLD = 50
 
 
 @dataclass
@@ -41,7 +41,7 @@ class CodeChunk:
 class Chunker:
     """Divides source files into indexable chunks."""
 
-    def __init__(self, small_file_threshold: int = SMALL_FILE_THRESHOLD):
+    def __init__(self, small_file_threshold: int = DEFAULT_SMALL_FILE_THRESHOLD):
         """Initialize chunker.
 
         Args:

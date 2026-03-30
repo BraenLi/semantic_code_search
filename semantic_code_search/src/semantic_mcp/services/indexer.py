@@ -22,7 +22,7 @@ class Indexer:
             config: Application configuration
         """
         self.config = config
-        self.chunker = Chunker()
+        self.chunker = Chunker(small_file_threshold=config.small_file_threshold)
         self.embedding_service = EmbeddingService(config.embedding)
         self.storage = StorageService(
             db_path=config.chroma_path,
@@ -57,6 +57,9 @@ class Indexer:
 
         Args:
             file_path: Path to file to index
+
+        Raises:
+            ValueError: If file is not under target directory
         """
         # Read file content
         content = file_path.read_text(encoding="utf-8")
@@ -68,7 +71,7 @@ class Indexer:
         if self._indexed_files.get(str(file_path)) == content_hash:
             return  # No change
 
-        # Get relative path
+        # Get relative path (may raise ValueError if file not under target_dir)
         rel_path = str(file_path.relative_to(self.config.target_dir))
 
         # Determine language
