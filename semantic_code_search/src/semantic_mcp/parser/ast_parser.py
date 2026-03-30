@@ -41,44 +41,17 @@ class CodeNode:
 # Tree-sitter language queries for extracting code elements
 QUERY_TEMPLATES = {
     "python": """
-    (function_definition
-        name: (identifier) @name
-        parameters: (parameters) @params
-        body: (block) @body) @function
-
-    (class_definition
-        name: (identifier) @name
-        body: (block
-            (function_definition
-                name: (identifier) @method_name) @method)) @class
+    (function_definition) @function
+    (class_definition) @class
     """,
     "c": """
-    (function_definition
-        declarator: (function_declarator
-            declarator: (identifier) @name) @params
-        body: (compound_statement) @body) @function
-
-    (struct_specifier
-        body: (field_declaration_list)) @struct
-
-    (type_definition
-        type: (struct_specifier
-            body: (field_declaration_list)) @struct_body
-        declarator: (type_identifier) @struct_name) @struct_def
+    (function_definition) @function
+    (struct_specifier) @struct
     """,
     "cpp": """
-    (function_definition
-        declarator: (function_declarator
-            declarator: (identifier) @name) @params
-        body: (compound_statement) @body) @function
-
-    (class_specifier
-        name: (type_identifier) @name
-        body: (field_declaration_list)) @class
-
-    (struct_specifier
-        name: (type_identifier) @name
-        body: (field_declaration_list)) @struct
+    (function_definition) @function
+    (class_specifier) @class
+    (struct_specifier) @struct
     """,
 }
 
@@ -202,6 +175,14 @@ class ASTParser:
 
     def _find_name_node(self, node):
         """Recursively find the name identifier node."""
+        # For function_definition, look for identifier in function_declarator
+        if node.type == "function_definition":
+            return self._find_function_name(node)
+
+        # For struct_specifier, look for type_identifier
+        if node.type == "struct_specifier":
+            return self._find_struct_name(node)
+
         # Check direct children first
         for child in node.children:
             if child.type in ("identifier", "type_identifier", "field_identifier"):
@@ -213,6 +194,40 @@ class ASTParser:
             if result:
                 return result
 
+        return None
+
+    def _find_struct_name(self, node):
+        """Find struct name - may be in type_definition wrapper."""
+        # struct_specifier itself doesn't have a name in C
+        # The name comes from the type_identifier child if present
+        for child in node.children:
+            if child.type == "type_identifier":
+                return child
+        # Return None for anonymous structs
+        return None
+
+    def _find_function_name(self, node):
+        """Find function name from function_definition node."""
+        # Traverse to find the function_declarator then identifier
+        for child in node.children:
+            if child.type == "pointer_declarator":
+                # For pointer returns like: Response* handle_login_request(...)
+                return self._find_function_name_in_declarator(child)
+            elif child.type == "function_declarator":
+                return self._find_function_name_in_declarator(child)
+            elif child.type == "identifier":
+                return child
+
+        # Fallback to first identifier
+        return self._find_name_node(node)
+
+    def _find_function_name_in_declarator(self, node):
+        """Find function name from declarator node."""
+        for child in node.children:
+            if child.type == "function_declarator":
+                return self._find_function_name_in_declarator(child)
+            elif child.type == "identifier":
+                return child
         return None
 
     def _build_relationships(self, nodes: list[CodeNode]):
