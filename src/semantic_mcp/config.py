@@ -7,8 +7,6 @@ from typing import Optional
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 
 @dataclass
 class EmbeddingConfig:
@@ -38,6 +36,7 @@ class Config:
     @classmethod
     def from_env(cls) -> "Config":
         """Load configuration from environment variables."""
+        load_dotenv()  # Lazy load - only when config is actually needed
         chroma_path = os.getenv("SEMANTIC_CHROMA_PATH", "./.semantic_index")
         target_dir = os.getenv("SEMANTIC_TARGET_DIR", ".")
 

@@ -45,6 +45,7 @@ class CodeChangeHandler(FileSystemEventHandler):
         self._sync_queue: queue.Queue = queue.Queue()
         self._processor_thread: Thread | None = None
         self._stop_event = asyncio.Event()
+        self._event_loop: asyncio.AbstractEventLoop | None = None
 
     def _is_code_file(self, path: str) -> bool:
         """Check if path matches code file patterns and is under target directory.
@@ -124,8 +125,14 @@ class CodeChangeHandler(FileSystemEventHandler):
                     await asyncio.sleep(0.1)  # Prevent busy loop
 
         def thread_target():
-            """Run async processor in thread."""
-            asyncio.run(processor())
+            """Run async processor in thread with dedicated event loop."""
+            self._event_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(self._event_loop)
+            try:
+                self._event_loop.run_until_complete(processor())
+            finally:
+                self._event_loop.close()
+                self._event_loop = None
 
         self._processor_thread = Thread(target=thread_target, daemon=True)
         self._processor_thread.start()

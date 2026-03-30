@@ -97,9 +97,9 @@ class StorageService:
         Args:
             file_path: File path to delete
         """
-        # Get all documents and filter by file_path using ChromaDB where syntax
+        # Get all documents and filter by file_path metadata using ChromaDB where syntax
         result = self.collection.get(
-            where={"file_path": {"$eq": file_path}},
+            where={"file_path": file_path},  # Direct equality match on metadata field
         )
 
         if result["ids"]:

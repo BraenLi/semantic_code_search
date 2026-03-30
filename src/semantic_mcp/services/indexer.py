@@ -57,8 +57,8 @@ class Indexer:
         Args:
             file_path: Path to file to index
 
-        Raises:
-            ValueError: If file is not under target directory
+        Note:
+            Silently skips files that are not under the target directory.
         """
         # Read file content
         content = file_path.read_text(encoding="utf-8")
@@ -70,8 +70,12 @@ class Indexer:
         if self._indexed_files.get(str(file_path)) == content_hash:
             return  # No change
 
-        # Get relative path (may raise ValueError if file not under target_dir)
-        rel_path = str(file_path.relative_to(self.config.target_dir))
+        # Get relative path - skip files not under target directory
+        try:
+            rel_path = str(file_path.relative_to(self.config.target_dir))
+        except ValueError:
+            # File is not under target directory, skip it
+            return
 
         # Determine language
         language = self._detect_language(file_path)
