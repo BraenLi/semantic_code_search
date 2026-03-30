@@ -34,6 +34,12 @@ export SEMANTIC_API_KEY="sk-your-api-key"
 
 # 目标代码库目录
 export SEMANTIC_TARGET_DIR="/path/to/your/codebase"
+
+# 可选配置
+export SEMANTIC_FILE_PATTERNS="*.py,*.c,*.cpp,*.h,*.hpp"  # 文件匹配模式
+export SEMANTIC_SMALL_FILE_THRESHOLD="50"  # 小文件行数阈值（默认 50）
+export SEMANTIC_DEBOUNCE_DURATION="1.0"  # 文件监听防抖延迟秒数（默认 1.0）
+export SEMANTIC_RESULT_CODE_LIMIT="500"  # 搜索结果代码截断字符数（默认 500）
 ```
 
 ## 使用
