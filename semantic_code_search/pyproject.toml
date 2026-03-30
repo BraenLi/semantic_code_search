@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-semantic-mcp = "semantic_mcp.main:main"
+semantic-mcp = "semantic_mcp.main:run"
 
 [build-system]
 requires = ["hatchling"]
