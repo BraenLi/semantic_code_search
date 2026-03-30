@@ -52,8 +52,20 @@ web = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "websockets>=12.0",
+    "python-multipart>=0.0.6",
 ]
 backtest = [
+    "matplotlib>=3.8.0",
+    "plotly>=5.18.0",
+]
+all = [
+    "akshare>=1.10.0",
+    "baostock>=0.8.0",
+    "yfinance>=0.2.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "websockets>=12.0",
+    "python-multipart>=0.0.6",
     "matplotlib>=3.8.0",
     "plotly>=5.18.0",
 ]
@@ -73,7 +85,7 @@ dev = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["qenas_core", "qenas_data", "qenas_backtest"]
+packages = ["qenas_core", "qenas_data", "qenas_backtest", "qenas_viz", "qenas_web"]
 
 [tool.black]
 line-length = 100

@@ -5,13 +5,144 @@
 - **项目名称**: QENAS (量子纠缠生态位自适应网络)
 - **项目位置**: `/Users/lgen/Users/lgen/QENAS`
 - **开始日期**: 2026-03-30
-- **状态**: 阶段 4 完成 - 可视化模块
+- **当前状态**: M4 阶段完成 - 完整回测系统 + Web 服务
 
 ## 配置确认
 
 - **数据源**: A 股 + 美股 + 港股
 - **时间尺度**: 日级 (低频)
 - **神经形态**: 完整实现 SNN
+
+---
+
+## M4 阶段完成 (2026-03-30)
+
+### 阶段 5.1: FastAPI 后端架构 - 完成
+
+**交付物**:
+- [x] `qenas_web/` - Web 服务模块
+- [x] `qenas_web/main.py` - FastAPI 应用工厂
+- [x] `qenas_web/config/settings.py` - 配置管理
+- [x] `qenas_web/api/v1/router.py` - API 路由汇总
+- [x] `qenas_web/api/v1/strategies.py` - 策略管理 API
+- [x] `qenas_web/api/v1/backtest.py` - 回测管理 API
+- [x] `qenas_web/api/v1/visualization.py` - 可视化数据 API
+- [x] `qenas_web/websocket/manager.py` - WebSocket 连接管理器
+- [x] `qenas_web/websocket/endpoint.py` - WebSocket 端点
+- [x] `qenas_web/services/strategy_service.py` - 策略管理服务
+- [x] `qenas_web/services/backtest_service.py` - 回测执行服务
+- [x] `qenas_web/services/visualization_service.py` - 可视化数据服务
+- [x] `qenas_web/.env.example` - 环境变量示例
+- [x] `qenas_web/README.md` - API 文档
+
+**API 端点**:
+- `GET/POST /api/v1/strategies` - 策略列表/创建
+- `GET/POST/DELETE /api/v1/strategies/{id}` - 策略详情/启动/停止/删除
+- `POST /api/v1/backtest/qenas` - 运行 QENAS 回测
+- `GET/DELETE /api/v1/backtest/{job_id}` - 回测任务详情/删除
+- `GET /api/v1/backtest/{job_id}/result` - 获取回测结果
+- `GET /api/v1/visualization/entanglement` - 纠缠矩阵数据
+- `GET /api/v1/visualization/events` - 事件数据
+- `GET /api/v1/visualization/performance` - 业绩数据
+- `GET /api/v1/visualization/ecosystem` - 生态系统状态
+- `GET /api/v1/visualization/dashboard` - 仪表板汇总
+- `WS /ws/qenas/{client_id}` - WebSocket 连接
+
+### 阶段 5.2: Vue3 前端界面 - 完成
+
+**交付物**:
+- [x] `qenas_ui/` - 前端界面模块
+- [x] `qenas_ui/package.json` - 依赖配置
+- [x] `qenas_ui/vite.config.js` - Vite 配置
+- [x] `qenas_ui/tailwind.config.js` - Tailwind CSS 配置
+- [x] `qenas_ui/index.html` - HTML 入口
+- [x] `qenas_ui/src/main.js` - Vue 入口
+- [x] `qenas_ui/src/App.vue` - 根组件
+- [x] `qenas_ui/src/router/index.js` - 路由配置
+- [x] `qenas_ui/src/stores/qenas.js` - Pinia 状态管理
+- [x] `qenas_ui/src/services/api.js` - REST API 客户端
+- [x] `qenas_ui/src/services/websocket.js` - WebSocket 客户端
+- [x] `qenas_ui/src/styles/main.css` - 全局样式
+- [x] `qenas_ui/src/components/` - 可复用组件
+  - [x] `EntanglementMatrix.vue` - 纠缠矩阵热力图
+  - [x] `EventTimeline.vue` - 事件时间线
+  - [x] `EquityCurve.vue` - 权益曲线图
+  - [x] `EcosystemView.vue` - 生态系统视图
+- [x] `qenas_ui/src/views/` - 页面视图
+  - [x] `Dashboard.vue` - 仪表板
+  - [x] `Backtest.vue` - 回测管理
+  - [x] `Monitoring.vue` - 实时监控
+  - [x] `Settings.vue` - 设置页面
+- [x] `qenas_ui/README.md` - 前端文档
+
+### 阶段 5.3: 配置更新 - 完成
+
+**交付物**:
+- [x] 更新 `pyproject.toml` 添加 web 依赖
+- [x] 更新构建配置包含 qenas_web 和 qenas_viz
+
+### 技术栈
+
+**后端**:
+- FastAPI 0.135.2
+- Uvicorn 0.42.0
+- WebSockets 16.0
+- Python-Multipart 0.0.22
+
+**前端**:
+- Vue 3.4.0
+- Vite 5.0.0
+- Pinia 2.1.0
+- Vue Router 4.2.0
+- Axios 1.6.0
+- ECharts 5.4.0
+- Vue-ECharts 6.6.0
+- Tailwind CSS 3.4.0
+
+### 功能特性
+
+**后端服务**:
+- RESTful API 设计
+- WebSocket 实时推送（纠缠矩阵、事件、业绩、生态系统）
+- 异步回测执行
+- 结果缓存
+- CORS 支持
+- 健康检查端点
+
+**前端界面**:
+- 响应式设计（支持桌面和移动端）
+- 实时数据更新（WebSocket）
+- ECharts 可视化图表
+- 暗色主题
+- 组件化架构
+- 状态管理（Pinia）
+
+### 验证结果
+
+```bash
+# FastAPI 应用加载测试
+uv run python -c "from qenas_web.main import app; print('FastAPI app loaded successfully:', app.title)"
+# 输出：FastAPI app loaded successfully: QENAS API
+```
+
+### 启动说明
+
+**启动后端服务**:
+```bash
+cd /Users/lgen/Users/lgen/QENAS
+uv run uvicorn qenas_web.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**启动前端开发服务器**:
+```bash
+cd /Users/lgen/Users/lgen/QENAS/qenas_ui
+npm install
+npm run dev
+```
+
+**访问服务**:
+- API 文档：http://localhost:8000/docs
+- 前端界面：http://localhost:5173
 
 ---
 
