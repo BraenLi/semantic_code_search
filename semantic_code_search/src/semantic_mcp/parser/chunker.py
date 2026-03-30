@@ -115,7 +115,14 @@ class Chunker:
         return chunks
 
     def _generate_description(self, node: CodeNode) -> str:
-        """Generate natural language description for a code node."""
+        """Generate natural language description for a code node.
+
+        Args:
+            node: CodeNode to describe
+
+        Returns:
+            Natural language description string
+        """
         type_labels = {
             "function": "Function",
             "class": "Class",

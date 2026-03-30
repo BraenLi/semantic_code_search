@@ -113,12 +113,20 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             )]
 
         output = f"Found {len(results)} results:\n\n"
+        code_limit = config.result_code_limit if config else 500
         for i, result in enumerate(results, 1):
             output += f"{i}. {result['file']}:{result['start_line']}-{result['end_line']}\n"
             output += f"   {result['type']}: {result['name']}\n"
             output += f"   Score: {result['score']:.2f}\n"
             output += f"   {result['description']}\n"
-            output += f"   ```{result['language']}\n{result['code'][:500]}...\n```\n\n"
+            # Only truncate if code is longer than limit
+            code = result.get('code', '')
+            if code and len(code) > code_limit:
+                output += f"   ```{result['language']}\n{code[:code_limit]}...\n```\n\n"
+            elif code:
+                output += f"   ```{result['language']}\n{code}\n```\n\n"
+            else:
+                output += f"   ```{result['language']}\n<code not available>\n```\n\n"
 
         return [TextContent(type="text", text=output)]
 

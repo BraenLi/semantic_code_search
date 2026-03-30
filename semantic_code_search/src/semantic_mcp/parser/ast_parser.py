@@ -175,8 +175,15 @@ class ASTParser:
             ast_path=capture_name,
         )
 
-    def _find_name_node(self, node):
-        """Recursively find the name identifier node."""
+    def _find_name_node(self, node) -> Optional[CodeNode]:
+        """Recursively find the name identifier node.
+
+        Args:
+            node: Tree-sitter node to search
+
+        Returns:
+            Identifier node or None if not found
+        """
         # For function_definition, look for identifier in function_declarator
         if node.type == "function_definition":
             return self._find_function_name(node)
@@ -198,8 +205,15 @@ class ASTParser:
 
         return None
 
-    def _find_struct_name(self, node):
-        """Find struct name - may be in type_definition wrapper."""
+    def _find_struct_name(self, node) -> Optional[CodeNode]:
+        """Find struct name - may be in type_definition wrapper.
+
+        Args:
+            node: Tree-sitter struct_specifier node
+
+        Returns:
+            Type identifier node or None for anonymous structs
+        """
         # struct_specifier itself doesn't have a name in C
         # The name comes from the type_identifier child if present
         for child in node.children:
@@ -208,8 +222,15 @@ class ASTParser:
         # Return None for anonymous structs
         return None
 
-    def _find_function_name(self, node):
-        """Find function name from function_definition node."""
+    def _find_function_name(self, node) -> Optional[CodeNode]:
+        """Find function name from function_definition node.
+
+        Args:
+            node: Tree-sitter function_definition node
+
+        Returns:
+            Identifier node or None if not found
+        """
         # Traverse to find the function_declarator then identifier
         for child in node.children:
             if child.type == "pointer_declarator":
@@ -223,8 +244,15 @@ class ASTParser:
         # Fallback to first identifier
         return self._find_name_node(node)
 
-    def _find_function_name_in_declarator(self, node):
-        """Find function name from declarator node."""
+    def _find_function_name_in_declarator(self, node) -> Optional[CodeNode]:
+        """Find function name from declarator node.
+
+        Args:
+            node: Tree-sitter declarator node
+
+        Returns:
+            Identifier node or None if not found
+        """
         for child in node.children:
             if child.type == "function_declarator":
                 return self._find_function_name_in_declarator(child)
@@ -232,8 +260,12 @@ class ASTParser:
                 return child
         return None
 
-    def _build_relationships(self, nodes: list[CodeNode]):
-        """Build parent relationships and AST paths."""
+    def _build_relationships(self, nodes: list[CodeNode]) -> None:
+        """Build parent relationships and AST paths.
+
+        Args:
+            nodes: List of code nodes to process
+        """
         # Simple implementation: set AST path based on node type
         for node in nodes:
             if node.node_type == "method":

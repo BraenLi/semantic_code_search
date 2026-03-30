@@ -27,6 +27,7 @@ class Config:
     embedding: EmbeddingConfig = None
     small_file_threshold: int = 50  # Lines below which file is indexed as single chunk
     debounce_duration: float = 1.0  # Seconds to wait for batch file changes
+    result_code_limit: int = 500  # Characters of code to show in search results
 
     def __post_init__(self):
         if self.file_patterns is None:
@@ -51,6 +52,7 @@ class Config:
 
         small_file_threshold = int(os.getenv("SEMANTIC_SMALL_FILE_THRESHOLD", "50"))
         debounce_duration = float(os.getenv("SEMANTIC_DEBOUNCE_DURATION", "1.0"))
+        result_code_limit = int(os.getenv("SEMANTIC_RESULT_CODE_LIMIT", "500"))
 
         return cls(
             chroma_path=chroma_path,
@@ -59,6 +61,7 @@ class Config:
             embedding=embedding,
             small_file_threshold=small_file_threshold,
             debounce_duration=debounce_duration,
+            result_code_limit=result_code_limit,
         )
 
     def validate(self) -> list[str]:
