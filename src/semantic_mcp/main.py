@@ -182,7 +182,7 @@ async def initialize_services():
 
     # Start file watcher
     watcher = WatcherService(config, indexer)
-    watcher.start(on_index_complete=lambda files: print(f"Indexed: {files}", file=sys.stderr))
+    watcher.start()
     print("File watcher started", file=sys.stderr)
 
 

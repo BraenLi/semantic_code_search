@@ -4,6 +4,7 @@ import asyncio
 from typing import Optional
 
 from openai import AsyncOpenAI, APIError, APIConnectionError, RateLimitError
+from openai import Timeout
 
 from semantic_mcp.config import EmbeddingConfig
 
@@ -12,6 +13,7 @@ from semantic_mcp.config import EmbeddingConfig
 MAX_RETRIES = 3
 BASE_DELAY = 1.0  # Base delay for exponential backoff (seconds)
 MAX_DELAY = 30.0  # Maximum delay between retries
+API_TIMEOUT = 30.0  # API request timeout in seconds
 
 
 class EmbeddingService:
@@ -22,11 +24,23 @@ class EmbeddingService:
 
         Args:
             config: Embedding configuration
+
+        Raises:
+            ValueError: If API key is not provided
         """
         self.config = config
+
+        # Fail fast if API key is missing
+        if not config.api_key:
+            raise ValueError(
+                "API key is required for embedding service. "
+                "Set SEMANTIC_API_KEY environment variable."
+            )
+
         self.client = AsyncOpenAI(
             base_url=config.base_url,
-            api_key=config.api_key or "dummy-key",
+            api_key=config.api_key,
+            timeout=Timeout(timeout=API_TIMEOUT, connect=10.0),
         )
 
     async def generate(self, text: str) -> list[float]:

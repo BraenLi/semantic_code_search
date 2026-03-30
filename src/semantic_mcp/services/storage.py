@@ -1,6 +1,5 @@
 """ChromaDB storage service for vector embeddings."""
 
-import hashlib
 from typing import Optional
 
 import chromadb
@@ -31,10 +30,6 @@ class StorageService:
             name=collection_name,
             metadata={"description": "Semantic code index"},
         )
-
-    def _compute_hash(self, content: str) -> str:
-        """Compute SHA256 hash of content."""
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def add(self, doc_id: str, embedding: list[float], metadata: dict) -> None:
         """Add document to collection.

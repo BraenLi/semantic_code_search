@@ -1,7 +1,5 @@
 """Indexer service for managing code index."""
 
-import hashlib
-import os
 from fnmatch import fnmatch
 from pathlib import Path
 from typing import Optional
@@ -10,6 +8,7 @@ from semantic_mcp.config import Config
 from semantic_mcp.parser.chunker import Chunker, CodeChunk
 from semantic_mcp.services.embeddings import EmbeddingService
 from semantic_mcp.services.storage import StorageService
+from semantic_mcp.utils.hash import compute_hash
 
 
 class Indexer:
@@ -65,7 +64,7 @@ class Indexer:
         content = file_path.read_text(encoding="utf-8")
 
         # Compute hash
-        content_hash = self._compute_hash(content)
+        content_hash = compute_hash(content)
 
         # Check if already indexed with same content
         if self._indexed_files.get(str(file_path)) == content_hash:
@@ -142,17 +141,6 @@ class Indexer:
             ".hpp": "cpp",
         }
         return mapping.get(ext)
-
-    def _compute_hash(self, content: str) -> str:
-        """Compute SHA256 hash of content.
-
-        Args:
-            content: File content
-
-        Returns:
-            Hash string
-        """
-        return hashlib.sha256(content.encode()).hexdigest()[:16]
 
     def _create_doc_id(self, file_path: Path, chunk: CodeChunk) -> str:
         """Create unique document ID.

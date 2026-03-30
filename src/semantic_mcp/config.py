@@ -75,6 +75,6 @@ class Config:
         if not target_path.exists():
             errors.append(f"Target directory does not exist: {self.target_dir}")
         elif not target_path.is_dir():
-            errors.append(f"Target path is not not a directory: {self.target_dir}")
+            errors.append(f"Target path is not a directory: {self.target_dir}")
 
         return errors
