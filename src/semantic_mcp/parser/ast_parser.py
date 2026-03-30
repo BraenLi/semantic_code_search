@@ -263,15 +263,21 @@ class ASTParser:
     def _build_relationships(self, nodes: list[CodeNode]) -> None:
         """Build parent relationships and AST paths.
 
+        Uses line number ranges to determine if a method is inside a class,
+        rather than just checking if class starts before the method.
+
         Args:
             nodes: List of code nodes to process
         """
-        # Simple implementation: set AST path based on node type
         for node in nodes:
             if node.node_type == "method":
-                # Find parent class
+                # Find parent class by checking if method is within class line range
                 for other in nodes:
-                    if other.node_type == "class" and other.start_line < node.start_line:
+                    if (
+                        other.node_type == "class"
+                        and other.start_line <= node.start_line
+                        and other.end_line >= node.end_line
+                    ):
                         node.ast_path = f"{other.node_name}/{node.node_type}"
                         node.parent = other
                         break

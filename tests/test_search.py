@@ -1,8 +1,6 @@
 """Tests for search service."""
 
 import pytest
-import tempfile
-from pathlib import Path
 from semantic_mcp.services.search import SearchService
 from semantic_mcp.config import Config, EmbeddingConfig
 
@@ -11,17 +9,11 @@ class TestSearchService:
     """Test semantic search functionality."""
 
     @pytest.fixture
-    def temp_dir(self):
-        """Create temporary directory."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            yield tmpdir
-
-    @pytest.fixture
-    def config(self, temp_dir):
+    def config(self, temp_dir) -> Config:
         """Test configuration."""
         return Config(
-            chroma_path=str(Path(temp_dir) / "chroma"),
-            target_dir=str(temp_dir),
+            chroma_path=str(temp_dir) + "/chroma",
+            target_dir=temp_dir,
             embedding=EmbeddingConfig(api_key="test-key"),
         )
 

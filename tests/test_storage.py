@@ -1,19 +1,11 @@
 """Tests for ChromaDB storage service."""
 
 import pytest
-import tempfile
-from pathlib import Path
 from semantic_mcp.services.storage import StorageService
 
 
 class TestStorageService:
     """Test ChromaDB storage operations."""
-
-    @pytest.fixture
-    def temp_dir(self):
-        """Create temporary directory for test database."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            yield tmpdir
 
     @pytest.fixture
     def storage(self, temp_dir):

@@ -1,7 +1,9 @@
 """File system watcher for automatic index updates."""
 
 import asyncio
+import queue
 from pathlib import Path
+from threading import Thread
 from typing import Callable
 
 from watchdog.observers import Observer
@@ -18,57 +20,85 @@ from semantic_mcp.services.indexer import Indexer
 
 
 class CodeChangeHandler(FileSystemEventHandler):
-    """Handles file system events for code files."""
+    """Handles file system events for code files.
+
+    Thread-safe design: File system events arrive on watchdog's worker thread.
+    Events are marshalled to the asyncio event loop via a queue for processing.
+    """
 
     def __init__(
         self,
         indexer: Indexer,
         config: Config,
-        on_index_complete: Callable | None = None,
+        event_queue: asyncio.Queue | None = None,
     ):
         """Initialize handler.
 
         Args:
             indexer: Indexer service
             config: Configuration
-            on_index_complete: Optional callback when indexing completes
+            event_queue: AsyncQueue for marshalling events to event loop
         """
         self.indexer = indexer
         self.config = config
-        self.on_index_complete = on_index_complete
-        self._pending_files: set[str] = set()
-        self._debounce_task: asyncio.Task | None = None
+        self._event_queue = event_queue
+        self._sync_queue: queue.Queue = queue.Queue()
+        self._processor_thread: Thread | None = None
+        self._stop_event = asyncio.Event()
 
     def _is_code_file(self, path: str) -> bool:
-        """Check if path matches code file patterns."""
-        path_obj = Path(path)
-        for pattern in self.config.file_patterns:
-            if path_obj.match(pattern):
-                return True
-        return False
+        """Check if path matches code file patterns and is under target directory.
+
+        Security: Validates file is within target directory to prevent path traversal.
+
+        Args:
+            path: File path to check
+
+        Returns:
+            True if path is a code file under target directory
+        """
+        try:
+            path_obj = Path(path).resolve()
+            target_dir = Path(self.config.target_dir).resolve()
+
+            # Security: Ensure file is under target directory
+            try:
+                path_obj.relative_to(target_dir)
+            except ValueError:
+                return False  # File outside target directory
+
+            return any(path_obj.match(pattern) for pattern in self.config.file_patterns)
+        except (OSError, RuntimeError):
+            return False  # Handle path resolution errors gracefully
 
     def _schedule_index(self, file_path: Path) -> None:
-        """Schedule file for indexing with debounce."""
-        self._pending_files.add(str(file_path))
+        """Schedule file for indexing - thread-safe.
 
-        if self._debounce_task and not self._debounce_task.done():
-            self._debounce_task.cancel()
+        Puts file path on queue for processing by event loop thread.
+        """
+        self._sync_queue.put_nowait(str(file_path))
 
-        self._debounce_task = asyncio.create_task(self._debounce_index())
-
-    async def _debounce_index(self) -> None:
-        """Wait for batch of changes then index."""
+    async def _process_pending_files(self) -> None:
+        """Process pending files from sync queue with debounce."""
         try:
             await asyncio.sleep(self.config.debounce_duration)
         except asyncio.CancelledError:
-            # Clean cancellation - pending files remain in queue for next batch
             return
 
-        if not self._pending_files:
+        # Drain the queue
+        files_to_index: list[str] = []
+        while True:
+            try:
+                file_str = self._sync_queue.get_nowait()
+                files_to_index.append(file_str)
+            except queue.Empty:
+                break
+
+        if not files_to_index:
             return
 
-        files_to_index = list(self._pending_files)
-        self._pending_files.clear()
+        # Deduplicate
+        files_to_index = list(set(files_to_index))
 
         for file_str in files_to_index:
             file_path = Path(file_str)
@@ -77,8 +107,35 @@ class CodeChangeHandler(FileSystemEventHandler):
             else:
                 self.indexer.remove_file(file_path)
 
-        if self.on_index_complete:
-            self.on_index_complete(files_to_index)
+    def start(self, on_index_complete: Callable | None = None) -> None:
+        """Start the async processor thread.
+
+        Args:
+            on_index_complete: Optional callback when indexing completes
+        """
+        async def processor():
+            """Async processor that drains queue and indexes files."""
+            while not self._stop_event.is_set():
+                if not self._sync_queue.empty():
+                    await self._process_pending_files()
+                    if on_index_complete:
+                        on_index_complete([])
+                else:
+                    await asyncio.sleep(0.1)  # Prevent busy loop
+
+        def thread_target():
+            """Run async processor in thread."""
+            asyncio.run(processor())
+
+        self._processor_thread = Thread(target=thread_target, daemon=True)
+        self._processor_thread.start()
+
+    def stop(self) -> None:
+        """Stop the processor thread."""
+        self._stop_event.set()
+        if self._processor_thread:
+            self._processor_thread.join(timeout=5.0)
+            self._processor_thread = None
 
     def on_modified(self, event):
         """Handle file modification."""
@@ -123,8 +180,8 @@ class WatcherService:
         self.handler = CodeChangeHandler(
             indexer=self.indexer,
             config=self.config,
-            on_index_complete=on_index_complete,
         )
+        self.handler.start(on_index_complete=on_index_complete)
 
         self.observer = Observer()
         self.observer.schedule(
@@ -136,6 +193,9 @@ class WatcherService:
 
     def stop(self) -> None:
         """Stop watching for file changes."""
+        if self.handler:
+            self.handler.stop()
+            self.handler = None
         if self.observer:
             self.observer.stop()
             self.observer.join()
