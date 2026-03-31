@@ -64,3 +64,38 @@ class TestStorageService:
 
         assert all(r["metadata"].get("source") == "a" for r in results1)
         assert all(r["metadata"].get("source") == "b" for r in results2)
+
+    def test_delete_by_file(self, storage):
+        """Should delete all documents for a given file path."""
+        # Add multiple documents for same file
+        storage.add("file1-chunk1", [0.1] * 1536, {"file_path": "/test/file1.py", "chunk": 1})
+        storage.add("file1-chunk2", [0.2] * 1536, {"file_path": "/test/file1.py", "chunk": 2})
+        storage.add("file1-chunk3", [0.3] * 1536, {"file_path": "/test/file1.py", "chunk": 3})
+        # Add document for different file
+        storage.add("file2-chunk1", [0.4] * 1536, {"file_path": "/test/file2.py", "chunk": 1})
+
+        # Verify initial count
+        assert storage.count() == 4
+
+        # Delete all documents for file1
+        storage.delete_by_file("/test/file1.py")
+
+        # Verify only file1 documents were deleted
+        assert storage.count() == 1
+        results = storage.get(["file2-chunk1"])
+        assert len(results) == 1
+
+    def test_delete_by_file_with_metadata_filter(self, storage):
+        """Should correctly filter by file_path metadata in ChromaDB."""
+        # Add documents with file_path metadata
+        storage.add("doc1", [0.5] * 1536, {"file_path": "/some/path.py"})
+        storage.add("doc2", [0.6] * 1536, {"file_path": "/other/path.py"})
+
+        # Delete by file path
+        storage.delete_by_file("/some/path.py")
+
+        # Verify correct document was deleted
+        results1 = storage.get(["doc1"])
+        results2 = storage.get(["doc2"])
+        assert len(results1) == 0
+        assert len(results2) == 1

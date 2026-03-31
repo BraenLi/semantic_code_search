@@ -85,3 +85,30 @@ class TestIndexer:
         assert indexer._detect_language(temp_path / "test.h") == "c"
         assert indexer._detect_language(temp_path / "test.hpp") == "cpp"
         assert indexer._detect_language(temp_path / "test.txt") is None
+
+    @pytest.mark.asyncio
+    async def test_index_file_skips_files_outside_target_directory(self, config, temp_path: Path):
+        """Should skip files that are outside the target directory.
+
+        This tests that the indexer handles ValueError from relative_to()
+        gracefully when a file is not under the target directory.
+        """
+        indexer = Indexer(config)
+
+        # Create a file outside target directory
+        outside_dir = temp_path.parent / f"outside_{temp_path.name}"
+        outside_dir.mkdir(exist_ok=True)
+        outside_file = outside_dir / "outside.py"
+        outside_file.write_text("def outside_func(): pass")
+
+        try:
+            # Attempt to index file outside target directory
+            # This should handle the ValueError gracefully and skip indexing
+            await indexer.index_file(outside_file)
+
+            # Verify no documents were indexed (storage should be empty)
+            assert indexer.storage.count() == 0
+        finally:
+            # Cleanup
+            outside_file.unlink()
+            outside_dir.rmdir()
